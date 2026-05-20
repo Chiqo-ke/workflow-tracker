@@ -1,5 +1,10 @@
 # Workflow Tracker
 
+**Author:** ROBINSON MACHARIA  
+**Email:** nyagamacharia6@gmail.com
+
+---
+
 A full-stack permit/licence application management system. Applicants submit applications through an online form; reviewers process them through a structured review workflow with approval, rejection, and clarification states.
 
 **Tech stack:** Django 4.2 + Django Ninja (backend) · React 18 + TypeScript + Vite (frontend) · SQLite (development)
