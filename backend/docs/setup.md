@@ -70,11 +70,39 @@ DB_ENGINE=sqlite
 
 ## 5. Run database migrations
 
+Two apps have models. Run `makemigrations` for each before migrating:
+
 ```bash
+python manage.py makemigrations accounts
+python manage.py makemigrations applications
 python manage.py migrate
 ```
 
 This creates `db.sqlite3` in the `backend/` directory.
+
+---
+
+## 5a. Create test users (optional)
+
+Create an applicant and a reviewer for manual testing:
+
+```bash
+python manage.py shell
+```
+
+```python
+from apps.accounts.models import User
+
+User.objects.create_user(username="applicant1", password="testpass123", role="applicant")
+User.objects.create_user(username="reviewer1",  password="testpass123", role="reviewer")
+exit()
+```
+
+Or create a Django superuser (has no `role` — use the accounts above for API testing):
+
+```bash
+python manage.py createsuperuser
+```
 
 ---
 

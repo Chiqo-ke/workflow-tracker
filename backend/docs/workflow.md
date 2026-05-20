@@ -54,6 +54,7 @@ This document describes the state machine that governs an application's lifecycl
 ### `submit` — Draft → Submitted
 
 - **Trigger:** Applicant submits the application for review.
+- **Role required:** `applicant` (own application only).
 - **Allowed from:** `Draft` only.
 - **Side effects:** `submitted_at` set to current UTC time.
 - **API:** `POST /api/applications/{id}/submit`
@@ -63,6 +64,7 @@ This document describes the state machine that governs an application's lifecycl
 ### `start-review` — Submitted → Under Review
 
 - **Trigger:** A reviewer picks up the application.
+- **Role required:** `reviewer`.
 - **Allowed from:** `Submitted` only.
 - **Side effects:** None beyond status change.
 - **API:** `POST /api/applications/{id}/start-review`
@@ -72,6 +74,7 @@ This document describes the state machine that governs an application's lifecycl
 ### `decision` — Under Review → Approved | Rejected | Need More Information
 
 - **Trigger:** Reviewer records their decision.
+- **Role required:** `reviewer`.
 - **Allowed from:** `Under Review` only.
 - **Side effects:** `reviewed_at` set to current UTC time; `reviewer_comment` saved.
 - **Comment rules:**
@@ -85,6 +88,7 @@ This document describes the state machine that governs an application's lifecycl
 ### `resubmit` — Need More Information → Submitted
 
 - **Trigger:** Applicant has addressed the reviewer's feedback and resubmits.
+- **Role required:** `applicant` (own application only).
 - **Allowed from:** `Need More Information` only.
 - **Side effects:** `submitted_at` updated to current UTC time.
 - **API:** `POST /api/applications/{id}/resubmit`

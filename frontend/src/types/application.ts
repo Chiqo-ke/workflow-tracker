@@ -23,6 +23,7 @@ export interface Application {
   description: string;
   status: ApplicationStatus;
   reviewer_comment: string | null;
+  owner_id: number | null;
   created_at: string;
   updated_at: string;
   submitted_at: string | null;

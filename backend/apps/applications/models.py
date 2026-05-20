@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -29,6 +30,13 @@ class Application(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     submitted_at = models.DateTimeField(blank=True, null=True)
     reviewed_at = models.DateTimeField(blank=True, null=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="applications",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         ordering = ["-created_at"]

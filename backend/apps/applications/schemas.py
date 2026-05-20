@@ -37,6 +37,7 @@ class ApplicationOutSchema(Schema):
     updated_at: datetime
     submitted_at: Optional[datetime] = None
     reviewed_at: Optional[datetime] = None
+    owner_id: Optional[int] = None
 
 
 class DecisionSchema(Schema):

@@ -16,6 +16,7 @@ A REST API for managing permit/licence applications through a structured review 
 |---|---|
 | Framework | Django 4.2 |
 | API | Django Ninja 1.x (OpenAPI/JSON Schema) |
+| Authentication | ninja-jwt 5.x (JWT via `ninja_jwt`) |
 | Database (dev) | SQLite |
 | Database (prod) | PostgreSQL 16 |
 | CORS | django-cors-headers |
@@ -32,12 +33,18 @@ backend/
 │   ├── wsgi.py
 │   └── asgi.py
 ├── apps/
+│   ├── accounts/            # User authentication domain
+│   │   ├── models.py        # Custom User model (extends AbstractUser, adds role field)
+│   │   ├── schemas.py       # RegisterSchema, UserOutSchema
+│   │   ├── api.py           # /register and /me endpoints
+│   │   ├── apps.py
+│   │   └── migrations/
 │   └── applications/        # Core application domain
 │       ├── enums.py         # ApplicationStatus & ApplicationType enums
-│       ├── models.py        # Application model
+│       ├── models.py        # Application model (with owner FK → accounts.User)
 │       ├── services.py      # WorkflowService — all state transitions
 │       ├── schemas.py       # Pydantic schemas (request / response)
-│       ├── api.py           # Django Ninja router (HTTP handlers only)
+│       ├── api.py           # Django Ninja router (HTTP handlers + role guards)
 │       ├── tests.py         # Unit tests
 │       └── migrations/
 ├── docs/                    # This folder
@@ -54,3 +61,4 @@ backend/
 - **Enums are the source of truth.** All status and type values come from `ApplicationStatus` and `ApplicationType` — never raw strings in logic.
 - **Surgical saves.** Every service method calls `save(update_fields=[...])` to avoid accidental full-model overwrites.
 - **Domain errors via `ValidationError`.** Service methods raise `django.core.exceptions.ValidationError` for invalid transitions; API handlers catch and convert to HTTP 400.
+- **Role-based access.** Every endpoint checks `request.auth.role` (`applicant` or `reviewer`). Applicants can only act on their own applications; reviewers can access any application but cannot create or edit them.

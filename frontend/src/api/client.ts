@@ -10,6 +10,11 @@ class ApiError extends Error {
   }
 }
 
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem("wt_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -17,7 +22,7 @@ async function request<T>(
 ): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 

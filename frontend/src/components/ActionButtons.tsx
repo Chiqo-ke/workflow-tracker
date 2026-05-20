@@ -7,6 +7,7 @@ import {
 } from "../hooks/useApplications";
 import type { Application } from "../types/application";
 import ReviewerDecisionForm from "./ReviewerDecisionForm";
+import { useAuth } from "../context/AuthContext";
 
 interface Props {
   application: Application;
@@ -16,6 +17,9 @@ type DecisionType = "Approved" | "Need More Information" | "Rejected";
 
 export default function ActionButtons({ application }: Props) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isReviewer = user?.role === "reviewer";
+  const isApplicant = user?.role === "applicant";
   const [activeDecision, setActiveDecision] = useState<DecisionType | null>(null);
   const submit = useSubmitApplication();
   const resubmit = useResubmitApplication();
@@ -24,6 +28,7 @@ export default function ActionButtons({ application }: Props) {
   const { id, status } = application;
 
   if (status === "Draft") {
+    if (!isApplicant) return null;
     return (
       <div style={{ display: "flex", gap: "0.75rem" }}>
         <button
@@ -44,6 +49,7 @@ export default function ActionButtons({ application }: Props) {
   }
 
   if (status === "Submitted") {
+    if (!isReviewer) return null;
     return (
       <button
         onClick={() => startReview.mutate(id)}
@@ -56,6 +62,7 @@ export default function ActionButtons({ application }: Props) {
   }
 
   if (status === "Under Review") {
+    if (!isReviewer) return null;
     return (
       <div>
         {!activeDecision && (
@@ -92,6 +99,7 @@ export default function ActionButtons({ application }: Props) {
   }
 
   if (status === "Need More Information") {
+    if (!isApplicant) return null;
     return (
       <div style={{ display: "flex", gap: "0.75rem" }}>
         <button

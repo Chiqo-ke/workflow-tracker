@@ -20,8 +20,12 @@ INSTALLED_APPS = [
     # Third-party
     "corsheaders",
     # Local
+    "apps.accounts",
     "apps.applications",
 ]
+
+# ── Custom user model ─────────────────────────────────────────────────────────
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # must be first
@@ -97,6 +101,17 @@ STATIC_URL = "static/"
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", cast=Csv())
+
+# ── JWT ──────────────────────────────────────────────────────────────────────
+from datetime import timedelta  # noqa: E402
+
+NINJA_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=8),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": False,
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+}
 
 # ── Misc ──────────────────────────────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

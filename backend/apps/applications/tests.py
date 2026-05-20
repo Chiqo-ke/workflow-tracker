@@ -1,12 +1,25 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from apps.accounts.models import User
+
 from .enums import ApplicationStatus, ApplicationType
 from .models import Application
 from .services import WorkflowService
 
 
-def make_app(status: str = ApplicationStatus.DRAFT) -> Application:
+def make_user(username: str = "testuser") -> User:
+    return User.objects.create_user(
+        username=username,
+        email=f"{username}@example.com",
+        password="testpass123",
+        role=User.ROLE_APPLICANT,
+    )
+
+
+def make_app(status: str = ApplicationStatus.DRAFT, owner: User | None = None) -> Application:
+    if owner is None:
+        owner = make_user(username=f"user_{status}_{id(object())}")
     return Application.objects.create(
         applicant_name="Jane Doe",
         applicant_email="jane@example.com",
@@ -14,6 +27,7 @@ def make_app(status: str = ApplicationStatus.DRAFT) -> Application:
         application_type=ApplicationType.RENEWAL,
         description="Test application",
         status=status,
+        owner=owner,
     )
 
 
