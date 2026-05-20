@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   useApplication,
@@ -9,6 +9,7 @@ import type { CreateApplicationPayload, ApplicationType } from "../types/applica
 import { APPLICATION_TYPES } from "../types/application";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
+import Button from "../components/Button";
 
 const EMPTY_FORM: CreateApplicationPayload = {
   applicant_name: "",
@@ -27,25 +28,21 @@ export default function ApplicationFormPage() {
   const createMutation = useCreateApplication();
   const updateMutation = useUpdateApplication(Number(id));
 
-  const [form, setForm] = useState<CreateApplicationPayload>(EMPTY_FORM);
+  const [patch, setPatch] = useState<Partial<CreateApplicationPayload>>({});
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (existing) {
-      setForm({
-        applicant_name: existing.applicant_name,
-        applicant_email: existing.applicant_email,
-        company_name: existing.company_name,
-        application_type: existing.application_type,
-        description: existing.description,
-      });
-    }
-  }, [existing]);
+  const form: CreateApplicationPayload = {
+    applicant_name: patch.applicant_name ?? existing?.applicant_name ?? EMPTY_FORM.applicant_name,
+    applicant_email: patch.applicant_email ?? existing?.applicant_email ?? EMPTY_FORM.applicant_email,
+    company_name: patch.company_name ?? existing?.company_name ?? EMPTY_FORM.company_name,
+    application_type: patch.application_type ?? existing?.application_type ?? EMPTY_FORM.application_type,
+    description: patch.description ?? existing?.description ?? EMPTY_FORM.description,
+  };
 
   if (isEdit && isLoading) return <LoadingSpinner />;
 
   function handleChange(field: keyof CreateApplicationPayload, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setPatch((prev) => ({ ...prev, [field]: value }));
   }
 
   function handleSubmit() {
@@ -63,82 +60,67 @@ export default function ApplicationFormPage() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "2rem 1.5rem" }}>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <Link
-          to={isEdit ? `/applications/${id}` : "/"}
-          style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)" }}
-        >
-          ← {isEdit ? "Back to application" : "All applications"}
-        </Link>
-      </div>
+    <div className="page-container-narrow">
+      <Link to={isEdit ? `/applications/${id}` : "/"} className="back-link">
+        ← {isEdit ? "Back to application" : "All applications"}
+      </Link>
 
-      <h1 style={{ fontSize: "1.5rem", fontWeight: 500, marginBottom: "1.5rem" }}>
-        {isEdit ? "Edit application" : "New application"}
-      </h1>
+      <h1 className="page-title">{isEdit ? "Edit application" : "New application"}</h1>
 
       {error && <ErrorMessage message={error} />}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-        {(
-          [
-            { label: "Applicant name", field: "applicant_name" as const, type: "text" },
-            { label: "Applicant email", field: "applicant_email" as const, type: "email" },
-            { label: "Company name", field: "company_name" as const, type: "text" },
-          ]
-        ).map(({ label, field, type }) => (
-          <div key={field}>
-            <label style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
-              {label}
-            </label>
-            <input
-              type={type}
-              value={form[field]}
-              onChange={(e) => handleChange(field, e.target.value)}
+      <div className="form-card">
+        <div className="form-stack">
+          {(
+            [
+              { label: "Applicant name", field: "applicant_name" as const, type: "text" },
+              { label: "Applicant email", field: "applicant_email" as const, type: "email" },
+              { label: "Company name", field: "company_name" as const, type: "text" },
+            ]
+          ).map(({ label, field, type }) => (
+            <div key={field} className="form-group">
+              <label className="form-label" htmlFor={field}>{label}</label>
+              <input
+                id={field}
+                type={type}
+                value={form[field]}
+                onChange={(e) => handleChange(field, e.target.value)}
+              />
+            </div>
+          ))}
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="application_type">Application type</label>
+            <select
+              id="application_type"
+              value={form.application_type}
+              onChange={(e) => handleChange("application_type", e.target.value as ApplicationType)}
+            >
+              {APPLICATION_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="description">Description</label>
+            <textarea
+              id="description"
+              rows={5}
+              value={form.description}
+              onChange={(e) => handleChange("description", e.target.value)}
             />
           </div>
-        ))}
-
-        <div>
-          <label style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
-            Application type
-          </label>
-          <select
-            value={form.application_type}
-            onChange={(e) => handleChange("application_type", e.target.value as ApplicationType)}
-          >
-            {APPLICATION_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
         </div>
 
-        <div>
-          <label style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
-            Description
-          </label>
-          <textarea
-            rows={5}
-            value={form.description}
-            onChange={(e) => handleChange("description", e.target.value)}
-          />
+        <div className="form-actions">
+          <Button variant="primary" onClick={handleSubmit} disabled={isPending}>
+            {isPending ? "Saving…" : isEdit ? "Save changes" : "Create draft"}
+          </Button>
+          <Button variant="secondary" onClick={() => navigate(isEdit ? `/applications/${id}` : "/")}>
+            Cancel
+          </Button>
         </div>
-      </div>
-
-      <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem" }}>
-        <button
-          onClick={handleSubmit}
-          disabled={isPending}
-          style={{ background: "var(--color-blue-text)", color: "#fff" }}
-        >
-          {isPending ? "Saving…" : isEdit ? "Save changes" : "Create draft"}
-        </button>
-        <button
-          onClick={() => navigate(isEdit ? `/applications/${id}` : "/")}
-          style={{ background: "var(--color-gray-bg)", color: "var(--color-gray-text)" }}
-        >
-          Cancel
-        </button>
       </div>
     </div>
   );

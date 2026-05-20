@@ -29,6 +29,8 @@ export default function LoginPage() {
         username,
         password,
       });
+      // Store the token before fetching the user so getAuthHeaders() can read it
+      localStorage.setItem("wt_token", access);
       const user = await api.get<AuthUser>("/api/auth/me");
       login(access, user);
       navigate("/");

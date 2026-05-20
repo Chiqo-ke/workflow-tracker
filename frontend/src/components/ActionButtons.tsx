@@ -8,6 +8,7 @@ import {
 import type { Application } from "../types/application";
 import ReviewerDecisionForm from "./ReviewerDecisionForm";
 import { useAuth } from "../context/AuthContext";
+import Button from "./Button";
 
 interface Props {
   application: Application;
@@ -30,20 +31,13 @@ export default function ActionButtons({ application }: Props) {
   if (status === "Draft") {
     if (!isApplicant) return null;
     return (
-      <div style={{ display: "flex", gap: "0.75rem" }}>
-        <button
-          onClick={() => navigate(`/applications/${id}/edit`)}
-          style={{ background: "var(--color-gray-bg)", color: "var(--color-gray-text)" }}
-        >
+      <div className="btn-row">
+        <Button variant="secondary" onClick={() => navigate(`/applications/${id}/edit`)}>
           Edit
-        </button>
-        <button
-          onClick={() => submit.mutate(id)}
-          disabled={submit.isPending}
-          style={{ background: "var(--color-blue-text)", color: "#fff" }}
-        >
+        </Button>
+        <Button variant="primary" onClick={() => submit.mutate(id)} disabled={submit.isPending}>
           {submit.isPending ? "Submitting…" : "Submit"}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -51,13 +45,14 @@ export default function ActionButtons({ application }: Props) {
   if (status === "Submitted") {
     if (!isReviewer) return null;
     return (
-      <button
+      <Button
+        variant="primary"
+        className="btn-review"
         onClick={() => startReview.mutate(id)}
         disabled={startReview.isPending}
-        style={{ background: "var(--color-purple-text)", color: "#fff" }}
       >
         {startReview.isPending ? "Starting…" : "Start Review"}
-      </button>
+      </Button>
     );
   }
 
@@ -66,25 +61,16 @@ export default function ActionButtons({ application }: Props) {
     return (
       <div>
         {!activeDecision && (
-          <div style={{ display: "flex", gap: "0.75rem" }}>
-            <button
-              onClick={() => setActiveDecision("Approved")}
-              style={{ background: "var(--color-green-text)", color: "#fff" }}
-            >
+          <div className="btn-row">
+            <Button variant="success" onClick={() => setActiveDecision("Approved")}>
               Approve
-            </button>
-            <button
-              onClick={() => setActiveDecision("Need More Information")}
-              style={{ background: "var(--color-amber-text)", color: "#fff" }}
-            >
+            </Button>
+            <Button variant="warning" onClick={() => setActiveDecision("Need More Information")}>
               Request More Info
-            </button>
-            <button
-              onClick={() => setActiveDecision("Rejected")}
-              style={{ background: "var(--color-red-text)", color: "#fff" }}
-            >
+            </Button>
+            <Button variant="danger" onClick={() => setActiveDecision("Rejected")}>
               Reject
-            </button>
+            </Button>
           </div>
         )}
         {activeDecision && (
@@ -101,20 +87,13 @@ export default function ActionButtons({ application }: Props) {
   if (status === "Need More Information") {
     if (!isApplicant) return null;
     return (
-      <div style={{ display: "flex", gap: "0.75rem" }}>
-        <button
-          onClick={() => navigate(`/applications/${id}/edit`)}
-          style={{ background: "var(--color-gray-bg)", color: "var(--color-gray-text)" }}
-        >
+      <div className="btn-row">
+        <Button variant="secondary" onClick={() => navigate(`/applications/${id}/edit`)}>
           Edit
-        </button>
-        <button
-          onClick={() => resubmit.mutate(id)}
-          disabled={resubmit.isPending}
-          style={{ background: "var(--color-blue-text)", color: "#fff" }}
-        >
+        </Button>
+        <Button variant="primary" onClick={() => resubmit.mutate(id)} disabled={resubmit.isPending}>
           {resubmit.isPending ? "Resubmitting…" : "Resubmit"}
-        </button>
+        </Button>
       </div>
     );
   }

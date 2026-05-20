@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRecordDecision } from "../hooks/useApplications";
 import type { DecisionPayload } from "../types/application";
 import ErrorMessage from "./ErrorMessage";
+import Button from "./Button";
 
 interface Props {
   applicationId: number;
@@ -13,6 +14,18 @@ const REQUIRES_COMMENT: DecisionPayload["decision"][] = [
   "Need More Information",
   "Rejected",
 ];
+
+const LABEL: Record<string, string> = {
+  Approved: "Confirm approval",
+  "Need More Information": "Request more information",
+  Rejected: "Confirm rejection",
+};
+
+const BUTTON_VARIANT: Record<string, "success" | "warning" | "danger"> = {
+  Approved: "success",
+  "Need More Information": "warning",
+  Rejected: "danger",
+};
 
 export default function ReviewerDecisionForm({ applicationId, decision, onClose }: Props) {
   const [comment, setComment] = useState("");
@@ -38,60 +51,32 @@ export default function ReviewerDecisionForm({ applicationId, decision, onClose 
     );
   }
 
-  const LABEL: Record<string, string> = {
-    Approved: "Confirm approval",
-    "Need More Information": "Request more information",
-    Rejected: "Confirm rejection",
-  };
-
-  const BUTTON_COLOR: Record<string, string> = {
-    Approved: "var(--color-green-text)",
-    "Need More Information": "var(--color-amber-text)",
-    Rejected: "var(--color-red-text)",
-  };
-
   return (
-    <div
-      style={{
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-lg)",
-        padding: "1.5rem",
-        marginTop: "1rem",
-      }}
-    >
-      <h3 style={{ marginBottom: "1rem", fontSize: "1rem" }}>{LABEL[decision]}</h3>
+    <div className="decision-form">
+      <div className="decision-form-title">{LABEL[decision]}</div>
+      <div className="decision-form-subtitle">This action will update the application status.</div>
 
       {error && <ErrorMessage message={error} />}
 
-      <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", color: "var(--color-text-secondary)" }}>
-        Comment {requiresComment ? "(required)" : "(optional)"}
-      </label>
-      <textarea
-        rows={4}
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        placeholder="Add a reviewer comment…"
-        style={{ marginBottom: "1rem" }}
-      />
+      <div className="form-group">
+        <label className="form-label">
+          Comment {requiresComment ? "(required)" : "(optional)"}
+        </label>
+        <textarea
+          rows={4}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Add a reviewer comment…"
+        />
+      </div>
 
-      <div style={{ display: "flex", gap: "0.75rem" }}>
-        <button
-          onClick={handleSubmit}
-          disabled={isPending}
-          style={{
-            background: BUTTON_COLOR[decision],
-            color: "#fff",
-          }}
-        >
+      <div className="form-actions form-actions--flush">
+        <Button variant={BUTTON_VARIANT[decision]} onClick={handleSubmit} disabled={isPending}>
           {isPending ? "Saving…" : "Confirm"}
-        </button>
-        <button
-          onClick={onClose}
-          style={{ background: "var(--color-gray-bg)", color: "var(--color-gray-text)" }}
-        >
+        </Button>
+        <Button variant="secondary" onClick={onClose}>
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );
