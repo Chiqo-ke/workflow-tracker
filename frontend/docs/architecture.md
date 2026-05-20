@@ -11,7 +11,7 @@
 | Server state    | TanStack Query (React Query)    | 5.x       |
 | Styling         | Plain CSS with custom properties | —        |
 
-No UI component library is used. All styles are written in vanilla CSS using design tokens defined in `src/index.css`.
+No UI component library is used. All styles are written in vanilla CSS using design tokens and utility classes defined in `src/index.css`. Components reference these via CSS class names (e.g. `.badge--submitted`, `.btn-row`, `.btn-review`) rather than inline styles.
 
 ---
 
@@ -110,8 +110,9 @@ new QueryClient({
 Query keys are centralised in `useApplications.ts`:
 
 ```ts
-applicationKeys.all         // ["applications"]          — list query
-applicationKeys.detail(id)  // ["applications", id]      — single record
+applicationKeys.all              // ["applications"]              — unfiltered list
+applicationKeys.filtered(status) // ["applications", { status }]  — status-filtered list
+applicationKeys.detail(id)       // ["applications", id]          — single record
 ```
 
 Every mutation invalidates the relevant keys on success, so the UI always reflects the latest state after a workflow action.

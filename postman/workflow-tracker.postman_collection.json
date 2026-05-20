@@ -1,0 +1,342 @@
+{
+  "info": {
+    "_postman_id": "wt-collection-001",
+    "name": "Workflow Tracker API",
+    "description": "Complete API collection for the Workflow Tracker application.\n\nBase URL is set via the `baseUrl` environment variable (default: http://localhost:8000).\n\n**Quick start**\n1. Import `workflow-tracker.postman_environment.json` and select it as the active environment.\n2. Run **Auth / Login** with valid credentials — the `accessToken` variable is set automatically via a test script.\n3. Use any other request; the `Authorization` header is pre-filled from `{{accessToken}}`.\n\nSee `postman/README.md` for a full walkthrough.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "User registration, login, token refresh, and profile.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jane\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"s3cr3tP@ss\",\n  \"role\": \"applicant\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Create a new user account. `role` must be `applicant` or `reviewer`. Cannot be changed after registration. No token required."
+          },
+          "response": [
+            {
+              "name": "201 Created — applicant",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"username\": \"jane\",\n  \"email\": \"jane@example.com\",\n  \"role\": \"applicant\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access)  pm.environment.set('accessToken',  json.access);",
+                  "if (json.refresh) pm.environment.set('refreshToken', json.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/token", "host": ["{{baseUrl}}"], "path": ["api", "auth", "token"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jane\",\n  \"password\": \"s3cr3tP@ss\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Obtain JWT access + refresh tokens. A test script automatically saves them to the environment variables `accessToken` and `refreshToken`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"access\": \"<jwt_access_token>\",\n  \"refresh\": \"<jwt_refresh_token>\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access) pm.environment.set('accessToken', json.access);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/token/refresh", "host": ["{{baseUrl}}"], "path": ["api", "auth", "token", "refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refreshToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Exchange a refresh token for a new access token. Saves the new access token automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] },
+            "description": "Returns the authenticated user's profile (id, username, email, role)."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"username\": \"jane\",\n  \"email\": \"jane@example.com\",\n  \"role\": \"applicant\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Applications",
+      "description": "CRUD for application records. All endpoints require `Authorization: Bearer {{accessToken}}`.",
+      "item": [
+        {
+          "name": "Create Application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.environment.set('applicationId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/applications/", "host": ["{{baseUrl}}"], "path": ["api", "applications", ""] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Create a new Draft application. Role required: `applicant`. A test script saves the returned `id` to the `applicationId` variable.\n\n`application_type` must be one of: `Recordation`, `Renewal`, `Change of Ownership`, `Change of Name`, `Discontinuation`."
+          },
+          "response": []
+        },
+        {
+          "name": "List Applications (All)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/applications/", "host": ["{{baseUrl}}"], "path": ["api", "applications", ""] },
+            "description": "Returns all applications. Reviewers see every application; applicants see only their own."
+          },
+          "response": []
+        },
+        {
+          "name": "List Applications — Filter by Status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/?status=Submitted",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", ""],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Submitted",
+                  "description": "Filter to this status. Valid values: Draft, Submitted, Under Review, Need More Information, Approved, Rejected"
+                }
+              ]
+            },
+            "description": "Returns applications filtered by the given `status` query parameter. Useful for reviewers working through a specific queue.\n\nChange the `status` value to any valid `ApplicationStatus`:\n- `Draft`\n- `Submitted`\n- `Under Review`\n- `Need More Information`\n- `Approved`\n- `Rejected`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Application",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", "{{applicationId}}"]
+            },
+            "description": "Retrieve a single application by its ID. Reviewers can access any application. Applicants can only access their own."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Application (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", "{{applicationId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated description with additional details.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Partially update an application's fields. Only allowed when status is `Draft` or `Need More Information`. Role required: `applicant` (own application only). All fields are optional."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Workflow Actions",
+      "description": "State-transition endpoints. Each moves an application through the review lifecycle. All require `Authorization: Bearer {{accessToken}}`. See `workflow.md` for the full state diagram.",
+      "item": [
+        {
+          "name": "Submit (Draft → Submitted)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", "{{applicationId}}", "submit"]
+            },
+            "description": "Applicant submits a Draft application for review. Sets `submitted_at` to current UTC time.\n\nRole required: `applicant` (own application only).\nAllowed from: `Draft` only."
+          },
+          "response": []
+        },
+        {
+          "name": "Start Review (Submitted → Under Review)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/start-review",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", "{{applicationId}}", "start-review"]
+            },
+            "description": "Reviewer picks up a Submitted application and begins reviewing it.\n\nRole required: `reviewer`.\nAllowed from: `Submitted` only."
+          },
+          "response": []
+        },
+        {
+          "name": "Decision — Approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", "{{applicationId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Approved\",\n  \"comment\": \"All requirements satisfied.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Reviewer approves the application. Comment is optional.\n\nRole required: `reviewer`.\nAllowed from: `Under Review` only.\nSets `reviewed_at` to current UTC time."
+          },
+          "response": []
+        },
+        {
+          "name": "Decision — Reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", "{{applicationId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Rejected\",\n  \"comment\": \"Missing supporting documents — please attach proof of payment.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Reviewer rejects the application. Comment is **required** for rejections.\n\nRole required: `reviewer`.\nAllowed from: `Under Review` only."
+          },
+          "response": []
+        },
+        {
+          "name": "Decision — Need More Information",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", "{{applicationId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Need More Information\",\n  \"comment\": \"Please provide a valid company registration number.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Reviewer returns the application to the applicant for clarification. Comment is **required**.\n\nRole required: `reviewer`.\nAllowed from: `Under Review` only.\nApplication becomes editable again by the applicant."
+          },
+          "response": []
+        },
+        {
+          "name": "Resubmit (Need More Info → Submitted)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/resubmit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "applications", "{{applicationId}}", "resubmit"]
+            },
+            "description": "Applicant has addressed the reviewer's feedback and resubmits. Updates `submitted_at`.\n\nRole required: `applicant` (own application only).\nAllowed from: `Need More Information` only."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  }
+}

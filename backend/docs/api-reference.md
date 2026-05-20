@@ -248,11 +248,23 @@ Return applications ordered by most recently created.
 - **Reviewers** receive all applications.
 - **Applicants** receive only their own applications.
 
+**Query parameters**
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `status` | `ApplicationStatus` | no | Filter results to a single status value (e.g. `Submitted`, `Under Review`, `Need More Information`). Omit to return all applications. |
+
+**Example**
+
+```
+GET /api/applications/?status=Submitted
+```
+
 **Responses**
 
 | Status | Body |
 |---|---|
-| `200 OK` | Array of Application objects |
+| `200 OK` | Array of Application objects (filtered if `status` param present) |
 | `401 Unauthorized` | Error object |
 
 ---

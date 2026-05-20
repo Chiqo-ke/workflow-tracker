@@ -38,24 +38,35 @@ All hooks are built on TanStack Query v5. They return the same `UseQueryResult` 
 ### Query Key Factory
 
 ```ts
-applicationKeys.all           // ["applications"]
-applicationKeys.detail(id)    // ["applications", id]
+applicationKeys.all              // ["applications"]              — unfiltered list
+applicationKeys.filtered(status) // ["applications", { status }]  — filtered list
+applicationKeys.detail(id)       // ["applications", id]          — single record
 ```
 
 Always use these constants when referencing cache keys — never hard-code strings.
 
 ---
 
-### `useApplications()`
+### `useApplications(status?)`
 
-Fetches the full list of applications.
+Fetches the list of applications. Accepts an optional `status` string to filter results.
+
+Reviewers use this hook with a status value to power the filter buttons on the list page.
+Applicants call it with no argument to fetch all their own applications.
 
 ```ts
+// All applications (applicant's own, or all for reviewers)
 const { data, isLoading, isError } = useApplications();
+
+// Filtered by status (reviewer filter buttons)
+const { data } = useApplications("Submitted");
+const { data } = useApplications("Under Review");
+const { data } = useApplications("Need More Information");
+
 // data: Application[] | undefined
 ```
 
-**Endpoint:** `GET /api/applications/`
+**Endpoint:** `GET /api/applications/` (no filter) or `GET /api/applications/?status=<value>` (filtered)
 
 ---
 
