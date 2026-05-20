@@ -15,13 +15,19 @@ import type {
 // Query key factory — centralises cache key structure
 export const applicationKeys = {
   all: ["applications"] as const,
+  filtered: (status: string) => ["applications", { status }] as const,
   detail: (id: number) => ["applications", id] as const,
 };
 
-export function useApplications(): UseQueryResult<Application[]> {
+export function useApplications(status?: string): UseQueryResult<Application[]> {
   return useQuery({
-    queryKey: applicationKeys.all,
-    queryFn: () => api.get<Application[]>("/api/applications/"),
+    queryKey: status ? applicationKeys.filtered(status) : applicationKeys.all,
+    queryFn: () => {
+      const url = status
+        ? `/api/applications/?status=${encodeURIComponent(status)}`
+        : "/api/applications/";
+      return api.get<Application[]>(url);
+    },
   });
 }
 

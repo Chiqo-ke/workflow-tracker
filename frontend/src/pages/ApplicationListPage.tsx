@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useApplications } from "../hooks/useApplications";
 import { useAuth } from "../context/AuthContext";
 import StatusBadge from "../components/StatusBadge";
@@ -7,23 +7,44 @@ import ErrorMessage from "../components/ErrorMessage";
 import Button from "../components/Button";
 
 export default function ApplicationListPage() {
-  const { data: applications, isLoading, isError } = useApplications();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") ?? undefined;
+  const { data: applications, isLoading, isError } = useApplications(statusFilter);
   const { user } = useAuth();
   const isReviewer = user?.role === "reviewer";
+
+  const REVIEW_STATUSES = ["Submitted", "Under Review", "Need More Information"];
 
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1 className="page-title">Applications</h1>
-        {isReviewer ? (
-          <Link to="/applications?status=Submitted">
-            <Button variant="primary">Review Applications</Button>
-          </Link>
-        ) : (
-          <Link to="/applications/new">
-            <Button variant="primary">+ New Application</Button>
-          </Link>
-        )}
+        <h1 className="page-title">
+          {statusFilter ? `Applications — ${statusFilter}` : "Applications"}
+        </h1>
+        <div className="btn-row">
+          {isReviewer && statusFilter && (
+            <Button variant="secondary" onClick={() => setSearchParams({})}>
+              Show All
+            </Button>
+          )}
+          {isReviewer ? (
+            <div className="btn-row">
+              {REVIEW_STATUSES.map((s) => (
+                <Button
+                  key={s}
+                  variant={statusFilter === s ? "primary" : "secondary"}
+                  onClick={() => setSearchParams({ status: s })}
+                >
+                  {s}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <Link to="/applications/new">
+              <Button variant="primary">+ New Application</Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       {isLoading && <LoadingSpinner />}

@@ -43,10 +43,14 @@ def create_application(request, payload: ApplicationCreateSchema):
     tags=["Applications"],
     summary="List all applications",
 )
-def list_applications(request):
+def list_applications(request, status: str = None):
     if _is_reviewer(request.auth):
-        return Application.objects.all()
-    return Application.objects.filter(owner=request.auth)
+        qs = Application.objects.all()
+    else:
+        qs = Application.objects.filter(owner=request.auth)
+    if status:
+        qs = qs.filter(status=status)
+    return qs
 
 
 @router.get(
