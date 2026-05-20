@@ -1,0 +1,793 @@
+{
+  "info": {
+    "name": "Workflow Tracker API",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Complete API collection for the Workflow Tracker backend.\n\nBase URL is stored in the `baseUrl` collection variable (default: http://localhost:8000/api).\n\nThe happy-path folder runs all transitions in order — create → submit → start-review → decision.\nUse the included environment file to persist the `appId` variable across requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "appId",
+      "value": "1",
+      "type": "string",
+      "description": "Primary key of the application under test. Update after creating an application."
+    }
+  ],
+  "item": [
+    {
+      "name": "Applications — CRUD",
+      "description": "Create, list, retrieve, and update applications.",
+      "item": [
+        {
+          "name": "Create Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Create a new application in **Draft** status. A unique tracking number (`APP-YYYYMMDD-XXXXX`) is generated automatically.\n\nCopy the returned `id` and set it as the `appId` collection variable to use the workflow endpoints."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\",\n  \"status\": \"Draft\",\n  \"reviewer_comment\": null,\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:00:00Z\",\n  \"submitted_at\": null,\n  \"reviewed_at\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Applications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", ""]
+            },
+            "description": "Return all applications ordered by most recently created."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"tracking_number\": \"APP-20260520-A3F9C\",\n    \"applicant_name\": \"Jane Doe\",\n    \"applicant_email\": \"jane@example.com\",\n    \"company_name\": \"Acme Ltd\",\n    \"application_type\": \"Renewal\",\n    \"description\": \"Annual licence renewal for permit #1234.\",\n    \"status\": \"Draft\",\n    \"reviewer_comment\": null,\n    \"created_at\": \"2026-05-20T09:00:00Z\",\n    \"updated_at\": \"2026-05-20T09:00:00Z\",\n    \"submitted_at\": null,\n    \"reviewed_at\": null\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Application",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}"]
+            },
+            "description": "Retrieve a single application by its primary key (`appId` variable)."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\",\n  \"status\": \"Draft\",\n  \"reviewer_comment\": null,\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:00:00Z\",\n  \"submitted_at\": null,\n  \"reviewed_at\": null\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Not Found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Application (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicant_name\": \"John Doe\",\n  \"applicant_email\": \"john@example.com\",\n  \"company_name\": \"New Corp\",\n  \"application_type\": \"Recordation\",\n  \"description\": \"Updated description for the application.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Update fields on an application. **All fields are optional.** Only allowed when status is `Draft` or `Need More Information`. Returns `400` for any other status."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"John Doe\",\n  \"applicant_email\": \"john@example.com\",\n  \"company_name\": \"New Corp\",\n  \"application_type\": \"Recordation\",\n  \"description\": \"Updated description for the application.\",\n  \"status\": \"Draft\",\n  \"reviewer_comment\": null,\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:05:00Z\",\n  \"submitted_at\": null,\n  \"reviewed_at\": null\n}"
+            },
+            {
+              "name": "400 Bad Request — not editable",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Application cannot be edited in its current status.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Not Found\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Workflow Actions",
+      "description": "Status transition endpoints. Each moves the application through the workflow state machine.\n\nExpected order: submit → start-review → decision.\nIf decision is `Need More Information`, the applicant calls resubmit, then the cycle restarts from start-review.",
+      "item": [
+        {
+          "name": "Submit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "submit"]
+            },
+            "description": "Transition: **Draft → Submitted**\n\nSets `submitted_at` to the current UTC time. Fails with `400` if the application is not in `Draft` status."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\",\n  \"status\": \"Submitted\",\n  \"reviewer_comment\": null,\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:10:00Z\",\n  \"submitted_at\": \"2026-05-20T09:10:00Z\",\n  \"reviewed_at\": null\n}"
+            },
+            {
+              "name": "400 Bad Request — wrong status",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Application must be in Draft status to submit.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Not Found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Start Review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/start-review",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "start-review"]
+            },
+            "description": "Transition: **Submitted → Under Review**\n\nFails with `400` if the application is not in `Submitted` status."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\",\n  \"status\": \"Under Review\",\n  \"reviewer_comment\": null,\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:15:00Z\",\n  \"submitted_at\": \"2026-05-20T09:10:00Z\",\n  \"reviewed_at\": null\n}"
+            },
+            {
+              "name": "400 Bad Request — wrong status",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Application must be in Submitted status to start review.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Not Found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Decision — Approved",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Approved\",\n  \"comment\": \"All documents verified and in order.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Transition: **Under Review → Approved**\n\nComment is optional for an `Approved` decision. Sets `reviewed_at` to the current UTC time."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\",\n  \"status\": \"Approved\",\n  \"reviewer_comment\": \"All documents verified and in order.\",\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:20:00Z\",\n  \"submitted_at\": \"2026-05-20T09:10:00Z\",\n  \"reviewed_at\": \"2026-05-20T09:20:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Decision — Rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Rejected\",\n  \"comment\": \"Missing supporting documents. Application does not meet requirements.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Transition: **Under Review → Rejected**\n\n`comment` is **required** for a `Rejected` decision. Returns `400` if omitted."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\",\n  \"status\": \"Rejected\",\n  \"reviewer_comment\": \"Missing supporting documents. Application does not meet requirements.\",\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:20:00Z\",\n  \"submitted_at\": \"2026-05-20T09:10:00Z\",\n  \"reviewed_at\": \"2026-05-20T09:20:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request — missing comment",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"A comment is required when rejecting an application.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Decision — Need More Information",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Need More Information\",\n  \"comment\": \"Please provide the company registration certificate dated within the last 12 months.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Transition: **Under Review → Need More Information**\n\n`comment` is **required** — it tells the applicant what to provide. After this, the applicant calls `resubmit` to cycle back to `Submitted`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234.\",\n  \"status\": \"Need More Information\",\n  \"reviewer_comment\": \"Please provide the company registration certificate dated within the last 12 months.\",\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:20:00Z\",\n  \"submitted_at\": \"2026-05-20T09:10:00Z\",\n  \"reviewed_at\": \"2026-05-20T09:20:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request — missing comment",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"A comment is required when requesting more information.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Resubmit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/resubmit",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "resubmit"]
+            },
+            "description": "Transition: **Need More Information → Submitted**\n\nUpdates `submitted_at` to the current UTC time. Fails with `400` if the application is not in `Need More Information` status."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"tracking_number\": \"APP-20260520-A3F9C\",\n  \"applicant_name\": \"Jane Doe\",\n  \"applicant_email\": \"jane@example.com\",\n  \"company_name\": \"Acme Ltd\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Annual licence renewal for permit #1234. Added company registration certificate.\",\n  \"status\": \"Submitted\",\n  \"reviewer_comment\": \"Please provide the company registration certificate dated within the last 12 months.\",\n  \"created_at\": \"2026-05-20T09:00:00Z\",\n  \"updated_at\": \"2026-05-20T09:30:00Z\",\n  \"submitted_at\": \"2026-05-20T09:30:00Z\",\n  \"reviewed_at\": \"2026-05-20T09:20:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request — wrong status",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Application must be in Need More Information status to resubmit.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"detail\": \"Not Found\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Happy Path — Full Workflow",
+      "description": "Run these requests in order to walk a single application through the complete approval workflow:\n\n1. Create Application  \n2. Submit  \n3. Start Review  \n4. Decision (Approved)\n\nAfter step 1, copy the returned `id` into the `appId` collection variable before continuing.",
+      "item": [
+        {
+          "name": "1. Create Application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "    pm.collectionVariables.set('appId', json.id);",
+                  "    console.log('appId set to', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicant_name\": \"Happy Path User\",\n  \"applicant_email\": \"happy@example.com\",\n  \"company_name\": \"Happy Path Corp\",\n  \"application_type\": \"Renewal\",\n  \"description\": \"Happy path end-to-end test application.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Creates the application and automatically sets `appId` via the test script."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Submit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "submit"]
+            },
+            "description": "Draft → Submitted"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Start Review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/start-review",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "start-review"]
+            },
+            "description": "Submitted → Under Review"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Decision — Approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Approved\",\n  \"comment\": \"Happy path approval — all checks passed.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Under Review → Approved (terminal state)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Need More Info — Re-review Workflow",
+      "description": "Demonstrates the 'Need More Information' branch:\n\n1. Create Application  \n2. Submit  \n3. Start Review  \n4. Decision (Need More Information)  \n5. Update Application (add missing info)  \n6. Resubmit  \n7. Start Review (again)  \n8. Decision (Approved)\n\nStep 1 auto-sets `appId` via the test script.",
+      "item": [
+        {
+          "name": "1. Create Application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "    pm.collectionVariables.set('appId', json.id);",
+                  "    console.log('appId set to', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", ""]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"applicant_name\": \"Re-review User\",\n  \"applicant_email\": \"rereview@example.com\",\n  \"company_name\": \"Re-review Corp\",\n  \"application_type\": \"Change of Name\",\n  \"description\": \"Requesting a change of registered name.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Submit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "submit"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Start Review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/start-review",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "start-review"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4. Decision — Need More Information",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Need More Information\",\n  \"comment\": \"Please provide a certified copy of the name change resolution from the board of directors.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Update Application (add missing info)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Requesting a change of registered name. Attached: certified board resolution dated 2026-05-01.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6. Resubmit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/resubmit",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "resubmit"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Start Review (again)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/start-review",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "start-review"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Decision — Approved",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/applications/{{appId}}/decision",
+              "host": ["{{baseUrl}}"],
+              "path": ["applications", "{{appId}}", "decision"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"Approved\",\n  \"comment\": \"Board resolution received and verified. Name change approved.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
